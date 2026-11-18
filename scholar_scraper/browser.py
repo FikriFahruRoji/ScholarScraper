@@ -6,6 +6,7 @@ konsisten dan sesi browser selalu ditutup dengan rapi.
 from __future__ import annotations
 
 from contextlib import contextmanager
+from shutil import which
 
 from .errors import BrowserUnavailableError
 
@@ -43,6 +44,7 @@ def browser_session(timeout: int = 60, retries: int = 1):
     try:
         manager = StealthySession(
             headless=True,
+            executable_path=which("chromium"),
             timeout=int(timeout) * 1000,
             network_idle=True,
             retries=max(0, int(retries)),
