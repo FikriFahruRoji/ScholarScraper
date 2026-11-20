@@ -183,6 +183,7 @@ class ScholarScraper:
                 history = parse_citation_history(page)
 
             page_articles = parse_articles(page, start_index=len(articles) + 1)
+            previous_count = len(articles)
             for article in page_articles:
                 key = (
                     article.publication_id
@@ -205,7 +206,7 @@ class ScholarScraper:
                 self._fraction(len(articles), limit),
             )
 
-            if not page_articles:
+            if len(articles) == previous_count:
                 break
             if len(articles) >= limit:
                 break
@@ -240,14 +241,14 @@ class ScholarScraper:
             recent_metrics=recent_metrics,
             recent_since_year=recent_since,
             citation_history=history,
-            articles=tuple(articles),
+            articles=tuple(articles[:limit]),
             source_url=build_share_url(scholar_id, hl=options.hl),
             request_url=build_profile_url(scholar_id, hl=options.hl, sort=options.sort),
             fetched_at=datetime.now(timezone.utc),
             engine=engine,
             sort=options.sort,
             pages_fetched=pages_fetched,
-            has_more=more_available,
+            has_more=more_available or len(articles) > limit,
         )
 
     def _get(self, session, engine: str, url: str):

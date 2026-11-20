@@ -499,6 +499,7 @@ class ScholarSearcher:
             start += RESULTS_PER_PAGE
 
         if limit is not None:
+            more_available = more_available or len(results) > limit
             results = results[:limit]
         self._notify(
             on_progress,

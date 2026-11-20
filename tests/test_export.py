@@ -152,3 +152,14 @@ def test_search_excel(search):
     assert set(sheets) == {"Hasil", "Pencarian"}
     assert len(sheets["Hasil"]) == 3
     assert sheets["Hasil"].iloc[0]["Venue"] == "Educational Technology & Society"
+
+
+def test_formula_like_title_is_exported_as_text(profile):
+    from dataclasses import replace
+    from openpyxl import load_workbook
+
+    article = replace(profile.articles[0], title="=1+1")
+    sample = replace(profile, articles=(article,))
+    cell = load_workbook(BytesIO(to_excel_bytes(sample)))["Artikel"]["B2"]
+    assert (cell.value, cell.data_type) == ("=1+1", "s")
+    assert pd.read_csv(BytesIO(to_csv_bytes(sample))).iloc[0]["Judul"] == "'=1+1"

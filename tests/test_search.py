@@ -489,3 +489,11 @@ class TestPageDelay:
         monkeypatch.setattr("scholar_scraper.search.random.uniform", fail_uniform)
         searcher = ScholarSearcher(SearchOptions(delay_mode="fixed", delay=3.5))
         assert searcher._page_wait() == 3.5
+
+
+def test_limit_inside_last_search_page(monkeypatch):
+    searcher = ScholarSearcher(SearchOptions(max_results=2))
+    monkeypatch.setattr(searcher, "_get", lambda *_: make_search_page(5, more=False, start=0))
+    search = searcher._paginate(object(), "http", "test", None)
+    assert len(search.results) == 2
+    assert search.has_more

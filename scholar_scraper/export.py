@@ -193,8 +193,22 @@ def search_info_frame(search: ScholarSearch) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=["Atribut", "Nilai"])
 
 
+def _csv_bytes(frame: pd.DataFrame) -> bytes:
+    def protect_text(value):
+        if isinstance(value, str) and (
+            value.startswith(("\t", "\r", "\n"))
+            or value.lstrip().startswith(("=", "+", "-", "@"))
+        ):
+            return "'" + value
+        return value
+
+    for column in frame.select_dtypes(exclude="number"):
+        frame[column] = frame[column].map(protect_text)
+    return frame.to_csv(index=False).encode("utf-8-sig")
+
+
 def to_csv_bytes(profile: ScholarProfile) -> bytes:
-    return articles_frame(profile).to_csv(index=False).encode("utf-8-sig")
+    return _csv_bytes(articles_frame(profile))
 
 
 def to_json_bytes(profile: ScholarProfile) -> bytes:
@@ -204,7 +218,7 @@ def to_json_bytes(profile: ScholarProfile) -> bytes:
 
 
 def search_to_csv_bytes(search: ScholarSearch) -> bytes:
-    return search_frame(search).to_csv(index=False).encode("utf-8-sig")
+    return _csv_bytes(search_frame(search))
 
 
 def search_to_json_bytes(search: ScholarSearch) -> bytes:
@@ -260,6 +274,10 @@ def style_sheet(
     url_headers: set[str] | None = None,
 ) -> None:
     url_headers = url_headers or set()
+    for row in worksheet.iter_rows(min_row=2):
+        for cell in row:
+            if cell.data_type in {"f", "e"}:
+                cell.data_type = "s"
     worksheet.freeze_panes = "A2"
     if worksheet.max_row >= 2:
         worksheet.auto_filter.ref = worksheet.dimensions

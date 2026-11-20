@@ -114,3 +114,20 @@ def test_pagination_uses_actual_row_count_as_offset(monkeypatch):
     assert "cstart=20" in requested[1]
     assert "cstart=100" not in requested[1]
     assert profile.has_more is False
+
+
+def test_profile_limit_inside_last_page(monkeypatch):
+    scraper = ScholarScraper(ScrapeOptions(max_articles=2))
+    monkeypatch.setattr(scraper, "_get", lambda *_: make_page(5, more=False))
+    profile = scraper._paginate(object(), "http", "kukA0LcAAAAJ", None)
+    assert len(profile.articles) == 2
+    assert profile.has_more
+
+
+def test_repeated_profile_page_stops(monkeypatch):
+    scraper = ScholarScraper(ScrapeOptions(allow_pagination=True, delay=0))
+    pages = iter([make_page(2, more=True)] * 2)
+    monkeypatch.setattr(scraper, "_get", lambda *_: next(pages))
+    profile = scraper._paginate(object(), "http", "kukA0LcAAAAJ", None)
+    assert len(profile.articles) == 2
+    assert profile.pages_fetched == 2
